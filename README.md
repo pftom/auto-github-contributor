@@ -2,7 +2,7 @@
 
 # auto-github-contributor
 
-A Claude Code plugin that takes any GitHub repo and drives a full OSS contribution pipeline end-to-end: discover a quick-win candidate (labeled issues + repo scan), run a TDD dev-loop until lint/typecheck/tests all pass, then open a PR via `gh` and print the URL.
+A Claude Code skill + slash command that takes any GitHub repo and drives a full OSS contribution pipeline end-to-end: discover a quick-win candidate (labeled issues + repo scan), run a TDD dev-loop until lint/typecheck/tests all pass, then open a PR via `gh` and print the URL.
 
 One slash command, full pipeline, any repo.
 
@@ -33,7 +33,7 @@ Safety rails: never force-push, never commit to `main`/`master`/`develop`, never
 - `gh` (GitHub CLI) — authenticated (`gh auth login`, `repo` scope)
 - `git`
 - `jq`
-- Claude Code (this is a Claude Code plugin)
+- Claude Code
 
 Optional but nice to have:
 
@@ -43,27 +43,35 @@ Optional but nice to have:
 
 ## Installation
 
-This repo ships as a Claude Code plugin (`.claude-plugin/plugin.json`). Two ways to install:
+This repo ships the slash command (`commands/auto-contribute.md`) and the skill (`skills/auto-github-contributor/`) as plain files — no plugin manifest, no marketplace registration. Drop them into Claude Code's user or project directory and they're live.
 
-**A. As a plugin (recommended)**
-
-Clone the repo somewhere, then register it with Claude Code's plugin system:
+**A. User-level (recommended — available in every project)**
 
 ```bash
-git clone https://github.com/pftom/auto-github-contributor.git ~/.claude/plugins/auto-github-contributor
+git clone https://github.com/pftom/auto-github-contributor.git /tmp/auto-github-contributor
+mkdir -p ~/.claude/commands ~/.claude/skills
+cp    /tmp/auto-github-contributor/commands/auto-contribute.md  ~/.claude/commands/
+cp -R /tmp/auto-github-contributor/skills/auto-github-contributor ~/.claude/skills/
 ```
 
-Restart Claude Code. The `/auto-contribute` slash command should now appear, and the `auto-github-contributor` skill becomes invokable.
+Restart Claude Code. `/auto-contribute` appears as a slash command, and Claude can also invoke the `auto-github-contributor` skill by name.
 
-**B. Skill-only**
+**B. Project-level (scoped to one repo)**
 
-If you only want the skill (no slash command), copy `skills/auto-github-contributor/` into `~/.claude/skills/`:
+From the target repo's root:
 
 ```bash
-cp -R skills/auto-github-contributor ~/.claude/skills/
+git clone https://github.com/pftom/auto-github-contributor.git /tmp/auto-github-contributor
+mkdir -p .claude/commands .claude/skills
+cp    /tmp/auto-github-contributor/commands/auto-contribute.md  .claude/commands/
+cp -R /tmp/auto-github-contributor/skills/auto-github-contributor .claude/skills/
 ```
 
-Then invoke it by asking Claude to "auto-contribute to `<repo>`" or similar — the description field in `SKILL.md` handles trigger words.
+The command and skill are then available only inside that project.
+
+**C. Skill-only (no slash command)**
+
+If you don't want the `/auto-contribute` command — just the skill — drop `skills/auto-github-contributor/` into `~/.claude/skills/` (or `.claude/skills/`) alone. Invoke it by asking Claude to "auto-contribute to `<repo>`" or similar; the description in `SKILL.md` handles trigger words.
 
 ## Usage
 
@@ -148,7 +156,6 @@ Tip: set `TARGET_FORK=your-handle/agc-sandbox` so it pushes to the same repo (br
 ## How it works
 
 ```
-.claude-plugin/plugin.json          # plugin manifest
 commands/auto-contribute.md         # /auto-contribute slash command (thin wrapper)
 skills/auto-github-contributor/
   SKILL.md                          # orchestration playbook Claude reads

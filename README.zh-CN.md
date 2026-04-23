@@ -2,7 +2,7 @@
 
 # auto-github-contributor
 
-一个 Claude Code 插件：对任意 GitHub 仓库端到端跑通一次开源贡献流程 —— 自动发现 quick-win 候选（带标签的 issue + 仓库扫描），按 TDD 走 red/green/refactor 直到 lint/typecheck/tests 全绿，然后通过 `gh` 开 PR 并输出链接。
+一套 Claude Code skill + slash 命令：对任意 GitHub 仓库端到端跑通一次开源贡献流程 —— 自动发现 quick-win 候选（带标签的 issue + 仓库扫描），按 TDD 走 red/green/refactor 直到 lint/typecheck/tests 全绿，然后通过 `gh` 开 PR 并输出链接。
 
 一条 slash 命令，覆盖完整流水线，适用于任何仓库。
 
@@ -33,7 +33,7 @@
 - `gh`（GitHub CLI）—— 已登录（`gh auth login`，需要 `repo` scope）
 - `git`
 - `jq`
-- Claude Code（本项目是 Claude Code 插件）
+- Claude Code
 
 可选但推荐：
 
@@ -43,27 +43,35 @@
 
 ## 安装
 
-本仓库同时是一个 Claude Code 插件（`.claude-plugin/plugin.json`）。两种安装方式：
+本仓库只包含 slash 命令（`commands/auto-contribute.md`）和 skill（`skills/auto-github-contributor/`），都是普通文件 —— 不需要 plugin manifest，也不需要注册 marketplace。拷到 Claude Code 的 user 或 project 目录下即可生效。
 
-**A. 作为插件安装（推荐）**
-
-克隆本仓库到 Claude Code 插件目录：
+**A. 用户级安装（推荐，所有项目通用）**
 
 ```bash
-git clone https://github.com/pftom/auto-github-contributor.git ~/.claude/plugins/auto-github-contributor
+git clone https://github.com/pftom/auto-github-contributor.git /tmp/auto-github-contributor
+mkdir -p ~/.claude/commands ~/.claude/skills
+cp    /tmp/auto-github-contributor/commands/auto-contribute.md  ~/.claude/commands/
+cp -R /tmp/auto-github-contributor/skills/auto-github-contributor ~/.claude/skills/
 ```
 
-重启 Claude Code。之后 `/auto-contribute` slash 命令应当出现，`auto-github-contributor` skill 也可被 Claude 按需调用。
+重启 Claude Code，`/auto-contribute` 就会出现在 slash 命令列表里，`auto-github-contributor` skill 也能被 Claude 按名字调用。
 
-**B. 仅安装 skill**
+**B. 项目级安装（只在单个仓库生效）**
 
-如果只想要 skill、不要 slash 命令，把 `skills/auto-github-contributor/` 拷到 `~/.claude/skills/`：
+在目标项目根目录下：
 
 ```bash
-cp -R skills/auto-github-contributor ~/.claude/skills/
+git clone https://github.com/pftom/auto-github-contributor.git /tmp/auto-github-contributor
+mkdir -p .claude/commands .claude/skills
+cp    /tmp/auto-github-contributor/commands/auto-contribute.md  .claude/commands/
+cp -R /tmp/auto-github-contributor/skills/auto-github-contributor .claude/skills/
 ```
 
-之后用自然语言触发即可（比如 "auto-contribute to `<repo>`"）——`SKILL.md` 里的 description 字段会匹配这些关键词。
+这样命令和 skill 只在这个项目里可用。
+
+**C. 只要 skill、不要 slash 命令**
+
+只把 `skills/auto-github-contributor/` 拷到 `~/.claude/skills/`（或 `.claude/skills/`）即可。之后用自然语言触发（例如 "auto-contribute to `<repo>`"）——`SKILL.md` 里的 description 字段会匹配关键词。
 
 ## 使用
 
@@ -148,7 +156,6 @@ bash -n "$SKILL_DIR/browser-verify.sh"
 ## 工作原理
 
 ```
-.claude-plugin/plugin.json          # 插件清单
 commands/auto-contribute.md         # /auto-contribute slash 命令（薄壳）
 skills/auto-github-contributor/
   SKILL.md                          # Claude 要读的 orchestration playbook
